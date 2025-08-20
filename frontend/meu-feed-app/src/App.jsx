@@ -142,7 +142,7 @@ export default function App() {
     setError(null);
     try {
       const sourcesQueryParam = sources.join(',');
-      const response = await fetch(`http://localhost:3001/api/media?sources=${sourcesQueryParam}`);
+      const response = await fetch(`https://srappback.onrender.com/api/media?sources=${sourcesQueryParam}`);
       if (!response.ok) throw new Error('A resposta da rede não foi boa.');
       const data = await response.json();
       const formattedData = data.map(item => ({...item, timestamp: new Date(item.timestamp)}));
