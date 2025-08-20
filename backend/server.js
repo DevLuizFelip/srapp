@@ -21,7 +21,7 @@ app.use(cors());
 // --- Função para atualizar o yt-dlp automaticamente ---
 function updateYtDlp() {
     console.log('[DIAGNÓSTICO] Verificando atualizações para o yt-dlp...');
-    const ytDlpPath = path.join(__dirname, 'yt-dlp.exe');
+    const ytDlpPath = 'yt-dlp'; // Usa a versão instalada no sistema
     
     if (!fs.existsSync(ytDlpPath)) {
         console.error(`\n[ERRO CRÍTICO] O ficheiro 'yt-dlp.exe' não foi encontrado em: ${ytDlpPath}`);
