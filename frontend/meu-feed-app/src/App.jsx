@@ -99,8 +99,6 @@ const MediaItem = ({ item, onView, onToggleSelect, isSelected }) => {
 
 // --- Componente Principal da Aplicação ---
 export default function App() {
-  // --- URL DO BACKEND ---
-  // Substitua pelo seu URL público da Render
   const BACKEND_URL = 'https://srappback.onrender.com';
 
   const [media, setMedia] = useState([]);
@@ -201,16 +199,46 @@ export default function App() {
 
   const FilterButton = ({ filterType, children }) => ( <button onClick={() => setActiveFilter(filterType)} className={`button filter-button ${activeFilter === filterType ? 'active' : ''}`}> {children} </button> );
 
+  // --- LÓGICA DE RENDERIZAÇÃO SIMPLIFICADA ---
+  const renderContent = () => {
+    // 1. Estado de Erro
+    if (error) {
+        return <div className="error-message"><strong>Erro de Conexão: </strong><span>{error}</span></div>;
+    }
+    // 2. Estado de Carregamento Inicial
+    if (isLoading && media.length === 0) {
+        return <div className="loader-container"><div className="loader"></div></div>;
+    }
+    // 3. Estado com Conteúdo
+    if (filteredMedia.length > 0) {
+        return (
+            <div className="media-grid">
+                {filteredMedia.slice(0, visibleCount).map(item => (
+                    <MediaItem key={item.id} item={item} onView={() => handleView(item)} onToggleSelect={handleToggleSelect} isSelected={selectedItems.includes(item.id)} />
+                ))}
+            </div>
+        );
+    }
+    // 4. Estado Vazio (sem erro e sem conteúdo)
+    return (
+        <div className="empty-state">
+            <p>{sources.length === 0 ? "Bem-vindo! Adicione uma fonte nas configurações para começar." : "Nenhum conteúdo encontrado para as fontes configuradas."}</p>
+            <p>Tente adicionar novas fontes nas configurações.</p>
+        </div>
+    );
+  };
+
+  const isModalOpen = isSettingsOpen || viewingMediaIndex !== null;
+
   return (
     <>
       <style>{`
-        :root { --blur-effect: ${isSettingsOpen || viewingMediaIndex !== null ? 'blur(8px)' : 'none'}; }
         * { box-sizing: border-box; }
         body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; -webkit-font-smoothing: antialiased; background-color: #111827; color: #ffffff; }
         
         .app-container-wrapper {
             transition: filter 0.3s ease-in-out;
-            filter: var(--blur-effect);
+            filter: ${isModalOpen ? 'blur(8px)' : 'none'};
         }
 
         .main-content { max-width: 1280px; margin: 0 auto; padding: 2rem 1rem; }
@@ -332,23 +360,10 @@ export default function App() {
             <FilterButton filterType="imagens">Imagens</FilterButton>
             <FilterButton filterType="videos">Vídeos</FilterButton>
           </div>
-          {error && ( <div className="error-message"><strong>Erro de Conexão: </strong><span>{error}</span></div> )}
-          {isLoading && media.length === 0 && sources.length > 0 ? ( <div className="loader-container"><div className="loader"></div></div> ) : (
-            <>
-              {!error && filteredMedia.length > 0 ? (
-                  <div className="media-grid">
-                  {filteredMedia.slice(0, visibleCount).map(item => (
-                      <MediaItem key={item.id} item={item} onView={() => handleView(item)} onToggleSelect={handleToggleSelect} isSelected={selectedItems.includes(item.id)} />
-                  ))}
-                  </div>
-              ) : !error && (
-                  <div className="empty-state">
-                      <p>{sources.length === 0 ? "Bem-vindo! Adicione uma fonte nas configurações para começar." : "Nenhum conteúdo encontrado para as fontes configuradas."}</p>
-                      <p>Tente adicionar novas fontes nas configurações.</p>
-                  </div>
-              )}
-            </>
-          )}
+          
+          {renderContent()}
+          
+          {/* Indicador de carregamento para o scroll infinito */}
           {isLoading && media.length > 0 && <div className="loader-container"><div className="loader"></div></div>}
         </div>
         {selectedItems.length > 0 && (
