@@ -87,7 +87,7 @@ const MediaItem = ({ item, onView, onToggleSelect, isSelected }) => {
         </div>
       </div>
       <div className="media-preview" onClick={() => onView(item)}>
-        {item.type === 'image' ? ( <img src={item.url} alt={`Post by ${item.author}`} loading="lazy" /> ) : ( <video muted loop preload="metadata" poster={item.thumbnailUrl}> <source src={`${item.url}#t=0.5`} type="video/mp4" /> </video> )}
+        {item.type === 'image' ? ( <img src={item.url} alt={`Post by ${media.author}`} loading="lazy" /> ) : ( <video muted loop preload="metadata" poster={item.thumbnailUrl}> <source src={`${item.url}#t=0.5`} type="video/mp4" /> </video> )}
       </div>
       <div className="card-footer">
         <div className="author-info">{getSourceIcon(item.source)}<span>{item.author}</span></div>
