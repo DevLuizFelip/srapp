@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 
 // --- Ícones SVG ---
-const TwitterIcon = () => ( <svg viewBox="0 0 24 24" fill="currentColor" className="source-icon"><path d="M22.46 6c-.77.35-1.6.58-2.46.67.88-.53 1.56-1.37 1.88-2.38-.83.5-1.75.85-2.72 1.05C18.37 4.5 17.26 4 16 4c-2.35 0-4.27 1.92-4.27 4.29 0 .34.04.67.11.98C8.28 9.09 5.11 7.38 3 4.79c-.37.63-.58 1.37-.58 2.15 0 1.49.75 2.81 1.91 3.56-.71 0-1.37-.22-1.95-.55v.03c0 2.08 1.48 3.82 3.44 4.21a4.22 4.22 0 0 1-1.93.07 4.28 4.28 0 0 0 4 2.98 8.521 8.521 0 0 1-5.33 1.84c-.34 0-.68-.02-1.02-.06C3.44 20.29 5.7 21 8.12 21c7.35 0 11.37-6.08 11.37-11.37 0-.17 0-.34-.01-.51.78-.57 1.45-1.28 1.98-2.08z"></path></svg> );
-const RedditIcon = () => ( <svg viewBox="0 0 24 24" fill="currentColor" className="source-icon"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-12h2v2h-2v-2zm0 4h2v6h-2v-6z"></path></svg> );
 const WebIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="source-icon"><path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" /></svg> );
 const SettingsIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="icon"><path strokeLinecap="round" strokeLinejoin="round" d="M10.343 3.94c.09-.542.56-1.007 1.11-1.227l.128-.054a2.25 2.25 0 012.862 2.862l-.054.128c-.22.55-.685 1.02-1.227 1.11a2.25 2.25 0 01-2.862-2.862zM12 17.25a5.25 5.25 0 100-10.5 5.25 5.25 0 000 10.5z" /><path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9 9 0 100-18 9 9 0 000 18z" /></svg> );
 const SyncIcon = ({ isSyncing }) => ( <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`icon ${isSyncing ? 'syncing' : ''}`}><path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0011.664 0l3.181-3.183m-4.991-2.695v-2.113a8.25 8.25 0 00-11.664 0v2.113" /></svg> );
@@ -14,7 +12,6 @@ const ImageWithPlaceholder = ({ originalSrc, backendUrl, alt }) => {
     const [isLoaded, setIsLoaded] = useState(false);
     const placeholderSrc = `${backendUrl}/api/image-proxy?url=${encodeURIComponent(originalSrc)}&q=low`;
     const fullSrc = `${backendUrl}/api/image-proxy?url=${encodeURIComponent(originalSrc)}`;
-
     return (
         <>
             <img src={placeholderSrc} className="image-placeholder" style={{ opacity: isLoaded ? 0 : 1 }} alt="" />
@@ -28,7 +25,7 @@ const SettingsPanel = ({ sources, setSources, onClose }) => {
     const [newSource, setNewSource] = useState('');
     const handleAddSource = (e) => { e.preventDefault(); if (newSource && !sources.includes(newSource)) { setSources([...sources, newSource.trim()]); setNewSource(''); } };
     const handleRemoveSource = (sourceToRemove) => { setSources(sources.filter(source => source !== sourceToRemove)); };
-    return ( <div className="modal-overlay"><div className="modal-content"><div className="modal-header"><h2 className="modal-title">Configurar Fontes</h2><button onClick={onClose} className="modal-close-button">&times;</button></div><p className="modal-subtitle">Adicione perfis do Twitter (ex: @usuario), subreddits (ex: r/nome) ou URLs de sites.</p><form onSubmit={handleAddSource} className="modal-form"><input type="text" value={newSource} onChange={(e) => setNewSource(e.target.value)} placeholder="Ex: @naturelover" className="modal-input"/><button type="submit" className="button primary">Adicionar</button></form><h3 className="sources-title">Fontes Atuais:</h3><ul className="sources-list">{sources.map(source => ( <li key={source} className="source-item"><span>{source}</span><button onClick={() => handleRemoveSource(source)} className="button-remove">REMOVER</button></li> ))}{sources.length === 0 && <p className="no-sources-message">Nenhuma fonte adicionada.</p>}</ul></div></div> );
+    return ( <div className="modal-overlay"><div className="modal-content"><div className="modal-header"><h2 className="modal-title">Configurar Fontes</h2><button onClick={onClose} className="modal-close-button">&times;</button></div><p className="modal-subtitle">Adicione URLs de sites para extrair imagens.</p><form onSubmit={handleAddSource} className="modal-form"><input type="text" value={newSource} onChange={(e) => setNewSource(e.target.value)} placeholder="Ex: https://unsplash.com" className="modal-input"/><button type="submit" className="button primary">Adicionar</button></form><h3 className="sources-title">Fontes Atuais:</h3><ul className="sources-list">{sources.map(source => ( <li key={source} className="source-item"><span>{source}</span><button onClick={() => handleRemoveSource(source)} className="button-remove">REMOVER</button></li> ))}{sources.length === 0 && <p className="no-sources-message">Nenhuma fonte adicionada.</p>}</ul></div></div> );
 };
 
 // --- Componente: Modal para Visualizar Mídia ---
@@ -65,11 +62,11 @@ const MediaViewerModal = ({ mediaList, currentIndex, onClose, backendUrl }) => {
       <div className="modal-content media-viewer" onClick={(e) => e.stopPropagation()} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove}>
         <button className="modal-nav-button prev" onClick={goToPrevious}>&#10094;</button>
         <div className="media-viewer-content">
-          {media.type === 'image' ? ( <img src={media.url} alt={`Post by ${media.author}`} /> ) : ( <video controls autoPlay key={media.id}> <source src={media.url} type="video/mp4" /> Seu navegador não suporta a tag de vídeo. </video> )}
+          <img src={media.url} alt={`Post by ${media.author}`} />
         </div>
         <div className="media-viewer-footer">
           <span className="media-viewer-author">{media.author}</span>
-          <a href={downloadUrl} className="button download" download>Baixar Mídia</a>
+          <a href={downloadUrl} className="button download" download>Baixar Imagem</a>
           <span className="media-viewer-counter">{localIndex + 1} / {mediaList.length}</span>
         </div>
         <button className="modal-nav-button next" onClick={goToNext}>&#10095;</button>
@@ -80,9 +77,6 @@ const MediaViewerModal = ({ mediaList, currentIndex, onClose, backendUrl }) => {
 
 // --- Componente para um item da Mídia (Card) ---
 const MediaItem = ({ item, onView, onToggleSelect, isSelected, backendUrl }) => {
-  const getSourceIcon = (source) => {
-    switch (source) { case 'twitter': return <TwitterIcon />; case 'reddit': return <RedditIcon />; case 'web': return <WebIcon />; default: return null; }
-  };
   return (
     <div className={`media-card ${isSelected ? 'selected' : ''}`}>
       <div className="selection-overlay">
@@ -91,10 +85,10 @@ const MediaItem = ({ item, onView, onToggleSelect, isSelected, backendUrl }) => 
         </div>
       </div>
       <div className="media-preview" onClick={() => onView(item)}>
-        {item.type === 'image' ? ( <ImageWithPlaceholder originalSrc={item.url} backendUrl={backendUrl} alt={`Post by ${item.author}`} /> ) : ( <video muted loop preload="metadata" poster={item.thumbnailUrl}> <source src={`${item.url}#t=0.5`} type="video/mp4" /> </video> )}
+        <ImageWithPlaceholder originalSrc={item.url} backendUrl={backendUrl} alt={`Post by ${item.author}`} />
       </div>
       <div className="card-footer">
-        <div className="author-info">{getSourceIcon(item.source)}<span>{item.author}</span></div>
+        <div className="author-info"><WebIcon /><span>{item.author}</span></div>
         <button onClick={() => onView(item)} className="button download">Visualizar</button>
       </div>
     </div>
@@ -106,8 +100,6 @@ export default function App() {
   const BACKEND_URL = 'https://srappback.onrender.com';
 
   const [media, setMedia] = useState([]);
-  const [filteredMedia, setFilteredMedia] = useState([]);
-  const [activeFilter, setActiveFilter] = useState('recentes');
   const [isLoading, setIsLoading] = useState(true);
   const [visibleCount, setVisibleCount] = useState(12);
   
@@ -157,21 +149,14 @@ export default function App() {
   useEffect(() => { fetchData(); }, [fetchData]);
 
   useEffect(() => {
-    let filtered = [...media];
-    if (activeFilter === 'imagens') filtered = media.filter(item => item.type === 'image');
-    else if (activeFilter === 'videos') filtered = media.filter(item => item.type === 'video');
-    setFilteredMedia(filtered);
-  }, [media, activeFilter]);
-
-  useEffect(() => {
     const handleScroll = () => {
       if (window.innerHeight + document.documentElement.scrollTop >= document.documentElement.offsetHeight - 500 && !isLoading) {
-        if (visibleCount < filteredMedia.length) setVisibleCount(prevCount => prevCount + 6);
+        if (visibleCount < media.length) setVisibleCount(prevCount => prevCount + 6);
       }
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [isLoading, visibleCount, filteredMedia]);
+  }, [isLoading, visibleCount, media]);
 
   const handleToggleSelect = (itemId) => { setSelectedItems(prev => prev.includes(itemId) ? prev.filter(id => id !== itemId) : [...prev, itemId]); };
   const handleBulkDownload = () => {
@@ -184,25 +169,23 @@ export default function App() {
     });
   };
   const handleView = (item) => {
-    const itemIndex = filteredMedia.findIndex(mediaItem => mediaItem.id === item.id);
+    const itemIndex = media.findIndex(mediaItem => mediaItem.id === item.id);
     setViewingMediaIndex(itemIndex);
   };
-
-  const FilterButton = ({ filterType, children }) => ( <button onClick={() => setActiveFilter(filterType)} className={`button filter-button ${activeFilter === filterType ? 'active' : ''}`}> {children} </button> );
 
   const renderContent = () => {
     if (error) return <div className="error-message"><strong>Erro de Conexão: </strong><span>{error}</span></div>;
     if (isLoading && media.length === 0) return <div className="loader-container"><div className="loader"></div></div>;
-    if (filteredMedia.length > 0) return (
+    if (media.length > 0) return (
       <div className="media-grid">
-        {filteredMedia.slice(0, visibleCount).map(item => (
+        {media.slice(0, visibleCount).map(item => (
           <MediaItem key={item.id} item={item} onView={() => handleView(item)} onToggleSelect={handleToggleSelect} isSelected={selectedItems.includes(item.id)} backendUrl={BACKEND_URL} />
         ))}
       </div>
     );
     return (
       <div className="empty-state">
-        <p>{sources.length === 0 ? "Bem-vindo! Adicione uma fonte nas configurações para começar." : "Nenhum conteúdo encontrado para as fontes configuradas."}</p>
+        <p>{sources.length === 0 ? "Bem-vindo! Adicione uma fonte nas configurações para começar." : "Nenhuma imagem encontrada para as fontes configuradas."}</p>
         <p>Tente adicionar novas fontes nas configurações.</p>
       </div>
     );
@@ -227,11 +210,9 @@ export default function App() {
         .icon { width: 1.5rem; height: 1.5rem; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         .syncing { animation: spin 1s linear infinite; }
-        .filters-container { display: flex; justify-content: center; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; }
         .button { padding: 0.75rem 1.5rem; font-weight: 600; border-radius: 0.375rem; border: none; cursor: pointer; transition: background-color 0.2s; background-color: #374151; color: #ffffff; }
         .button:hover { background-color: #4b5563; }
         .button.primary { background-color: #2563eb; }
-        .button.filter-button.active { background-color: #2563eb; }
         .button.download { font-size: 0.875rem; padding: 0.25rem 0.75rem; background-color: #2563eb; }
         .media-grid { display: grid; gap: 1.5rem; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
         .media-card { position: relative; background-color: #1f2937; border-radius: 0.5rem; overflow: hidden; border: 2px solid transparent; }
@@ -273,7 +254,7 @@ export default function App() {
         <div className="main-content">
           <header className="app-header">
             <div className="header-text">
-                <h1 className="header-title">Seu Feed de Mídia</h1>
+                <h1 className="header-title">Seu Feed de Imagens</h1>
                 <p className="header-subtitle">Todo o seu conteúdo favorito em um só lugar.</p>
             </div>
             <div className="header-actions">
@@ -281,11 +262,6 @@ export default function App() {
               <button onClick={() => setIsSettingsOpen(true)} className="icon-button" title="Configurações"><SettingsIcon /></button>
             </div>
           </header>
-          <div className="filters-container">
-            <FilterButton filterType="recentes">Mais Recentes</FilterButton>
-            <FilterButton filterType="imagens">Imagens</FilterButton>
-            <FilterButton filterType="videos">Vídeos</FilterButton>
-          </div>
           
           {renderContent()}
           
@@ -298,7 +274,7 @@ export default function App() {
         )}
       </div>
       
-      {viewingMediaIndex !== null && <MediaViewerModal mediaList={filteredMedia} currentIndex={viewingMediaIndex} onClose={() => setViewingMediaIndex(null)} backendUrl={BACKEND_URL} />}
+      {viewingMediaIndex !== null && <MediaViewerModal mediaList={media} currentIndex={viewingMediaIndex} onClose={() => setViewingMediaIndex(null)} backendUrl={BACKEND_URL} />}
       {isSettingsOpen && <SettingsPanel sources={sources} setSources={setSources} onClose={() => setIsSettingsOpen(false)} />}
     </>
   );
