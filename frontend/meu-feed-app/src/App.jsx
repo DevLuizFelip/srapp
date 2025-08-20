@@ -18,7 +18,7 @@ const SettingsPanel = ({ sources, setSources, onClose }) => {
 };
 
 // --- Componente: Modal para Visualizar Mídia ---
-const MediaViewerModal = ({ mediaList, currentIndex, onClose }) => {
+const MediaViewerModal = ({ mediaList, currentIndex, onClose, backendUrl }) => {
   const [localIndex, setLocalIndex] = useState(currentIndex);
   const touchStartX = useRef(0);
 
@@ -54,7 +54,7 @@ const MediaViewerModal = ({ mediaList, currentIndex, onClose }) => {
 
   if (currentIndex === null) return null;
   const media = mediaList[localIndex];
-  const downloadUrl = `http://localhost:3001/api/download?url=${encodeURIComponent(media.url)}`;
+  const downloadUrl = `${backendUrl}/api/download?url=${encodeURIComponent(media.url)}`;
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -99,6 +99,10 @@ const MediaItem = ({ item, onView, onToggleSelect, isSelected }) => {
 
 // --- Componente Principal da Aplicação ---
 export default function App() {
+  // --- URL DO BACKEND ---
+  // Substitua pelo seu URL público da Render
+  const BACKEND_URL = 'https://srappback.onrender.com';
+
   const [media, setMedia] = useState([]);
   const [filteredMedia, setFilteredMedia] = useState([]);
   const [activeFilter, setActiveFilter] = useState('recentes');
@@ -142,7 +146,7 @@ export default function App() {
     setError(null);
     try {
       const sourcesQueryParam = sources.join(',');
-      const response = await fetch(`https://srappback.onrender.com/api/media?sources=${sourcesQueryParam}`);
+      const response = await fetch(`${BACKEND_URL}/api/media?sources=${sourcesQueryParam}`);
       if (!response.ok) throw new Error('A resposta da rede não foi boa.');
       const data = await response.json();
       const formattedData = data.map(item => ({...item, timestamp: new Date(item.timestamp)}));
@@ -155,7 +159,7 @@ export default function App() {
     } finally {
       setIsLoading(false);
     }
-  }, [sources]);
+  }, [sources, BACKEND_URL]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
@@ -184,7 +188,7 @@ export default function App() {
     const selectedUrls = media.filter(item => selectedItems.includes(item.id)).map(item => item.url);
     selectedUrls.forEach((url, index) => {
       setTimeout(() => {
-        const downloadUrl = `http://localhost:3001/api/download?url=${encodeURIComponent(url)}`;
+        const downloadUrl = `${BACKEND_URL}/api/download?url=${encodeURIComponent(url)}`;
         window.open(downloadUrl, '_blank');
       }, index * 300);
     });
@@ -354,7 +358,7 @@ export default function App() {
         )}
       </div>
       
-      {viewingMediaIndex !== null && <MediaViewerModal mediaList={filteredMedia} currentIndex={viewingMediaIndex} onClose={() => setViewingMediaIndex(null)} />}
+      {viewingMediaIndex !== null && <MediaViewerModal mediaList={filteredMedia} currentIndex={viewingMediaIndex} onClose={() => setViewingMediaIndex(null)} backendUrl={BACKEND_URL} />}
       {isSettingsOpen && <SettingsPanel sources={sources} setSources={setSources} onClose={() => setIsSettingsOpen(false)} />}
     </>
   );
