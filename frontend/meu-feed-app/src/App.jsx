@@ -9,6 +9,20 @@ const SyncIcon = ({ isSyncing }) => ( <svg xmlns="http://www.w3.org/2000/svg" fi
 const CheckCircleIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg> );
 const CircleIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> );
 
+// --- Componente para Imagem com Placeholder (LQIP) ---
+const ImageWithPlaceholder = ({ originalSrc, backendUrl, alt }) => {
+    const [isLoaded, setIsLoaded] = useState(false);
+    const placeholderSrc = `${backendUrl}/api/image-proxy?url=${encodeURIComponent(originalSrc)}&q=low`;
+    const fullSrc = `${backendUrl}/api/image-proxy?url=${encodeURIComponent(originalSrc)}`;
+
+    return (
+        <>
+            <img src={placeholderSrc} className="image-placeholder" style={{ opacity: isLoaded ? 0 : 1 }} alt="" />
+            <img src={fullSrc} className="image-full" onLoad={() => setIsLoaded(true)} style={{ opacity: isLoaded ? 1 : 0 }} loading="lazy" alt={alt} />
+        </>
+    );
+};
+
 // --- Componente do Painel de Configurações ---
 const SettingsPanel = ({ sources, setSources, onClose }) => {
     const [newSource, setNewSource] = useState('');
@@ -21,14 +35,8 @@ const SettingsPanel = ({ sources, setSources, onClose }) => {
 const MediaViewerModal = ({ mediaList, currentIndex, onClose, backendUrl }) => {
   const [localIndex, setLocalIndex] = useState(currentIndex);
   const touchStartX = useRef(0);
-
-  const goToPrevious = useCallback(() => {
-    setLocalIndex(prevIndex => (prevIndex > 0 ? prevIndex - 1 : mediaList.length - 1));
-  }, [mediaList.length]);
-
-  const goToNext = useCallback(() => {
-    setLocalIndex(prevIndex => (prevIndex < mediaList.length - 1 ? prevIndex + 1 : 0));
-  }, [mediaList.length]);
+  const goToPrevious = useCallback(() => { setLocalIndex(prevIndex => (prevIndex > 0 ? prevIndex - 1 : mediaList.length - 1)); }, [mediaList.length]);
+  const goToNext = useCallback(() => { setLocalIndex(prevIndex => (prevIndex < mediaList.length - 1 ? prevIndex + 1 : 0)); }, [mediaList.length]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -45,11 +53,7 @@ const MediaViewerModal = ({ mediaList, currentIndex, onClose, backendUrl }) => {
     if (touchStartX.current === 0) return;
     const touchEndX = e.touches[0].clientX;
     const diff = touchStartX.current - touchEndX;
-    if (Math.abs(diff) > 50) { // Limiar de swipe
-      if (diff > 0) goToNext();
-      else goToPrevious();
-      touchStartX.current = 0; // Reset
-    }
+    if (Math.abs(diff) > 50) { if (diff > 0) goToNext(); else goToPrevious(); touchStartX.current = 0; }
   };
 
   if (currentIndex === null) return null;
@@ -75,7 +79,7 @@ const MediaViewerModal = ({ mediaList, currentIndex, onClose, backendUrl }) => {
 };
 
 // --- Componente para um item da Mídia (Card) ---
-const MediaItem = ({ item, onView, onToggleSelect, isSelected }) => {
+const MediaItem = ({ item, onView, onToggleSelect, isSelected, backendUrl }) => {
   const getSourceIcon = (source) => {
     switch (source) { case 'twitter': return <TwitterIcon />; case 'reddit': return <RedditIcon />; case 'web': return <WebIcon />; default: return null; }
   };
@@ -87,7 +91,7 @@ const MediaItem = ({ item, onView, onToggleSelect, isSelected }) => {
         </div>
       </div>
       <div className="media-preview" onClick={() => onView(item)}>
-        {item.type === 'image' ? ( <img src={item.url} alt={`Post by ${media.author}`} loading="lazy" /> ) : ( <video muted loop preload="metadata" poster={item.thumbnailUrl}> <source src={`${item.url}#t=0.5`} type="video/mp4" /> </video> )}
+        {item.type === 'image' ? ( <ImageWithPlaceholder originalSrc={item.url} backendUrl={backendUrl} alt={`Post by ${item.author}`} /> ) : ( <video muted loop preload="metadata" poster={item.thumbnailUrl}> <source src={`${item.url}#t=0.5`} type="video/mp4" /> </video> )}
       </div>
       <div className="card-footer">
         <div className="author-info">{getSourceIcon(item.source)}<span>{item.author}</span></div>
@@ -112,7 +116,6 @@ export default function App() {
       const savedSources = localStorage.getItem('mediaFeedSources');
       return savedSources ? JSON.parse(savedSources) : [];
     } catch (error) {
-      console.error("Failed to parse sources from localStorage", error);
       return [];
     }
   });
@@ -122,10 +125,7 @@ export default function App() {
   const [viewingMediaIndex, setViewingMediaIndex] = useState(null);
   const [selectedItems, setSelectedItems] = useState([]);
   
-  useEffect(() => {
-    localStorage.setItem('mediaFeedSources', JSON.stringify(sources));
-  }, [sources]);
-
+  useEffect(() => { localStorage.setItem('mediaFeedSources', JSON.stringify(sources)); }, [sources]);
   useEffect(() => {
     const isFirstVisit = !localStorage.getItem('mediaFeedVisited');
     if (isFirstVisit && sources.length === 0) {
@@ -135,11 +135,7 @@ export default function App() {
   }, []);
 
   const fetchData = useCallback(async () => {
-    if (sources.length === 0) {
-        setMedia([]);
-        setIsLoading(false);
-        return;
-    }
+    if (sources.length === 0) { setMedia([]); setIsLoading(false); return; }
     setIsLoading(true);
     setError(null);
     try {
@@ -151,7 +147,6 @@ export default function App() {
       const sortedData = formattedData.sort((a, b) => b.timestamp - a.timestamp);
       setMedia(sortedData);
     } catch (error) {
-      console.error("Falha ao buscar dados do backend:", error);
       setError('Não foi possível conectar ao servidor. Verifique se o backend está rodando e tente sincronizar novamente.');
       setMedia([]);
     } finally {
@@ -178,10 +173,7 @@ export default function App() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [isLoading, visibleCount, filteredMedia]);
 
-  const handleToggleSelect = (itemId) => {
-    setSelectedItems(prev => prev.includes(itemId) ? prev.filter(id => id !== itemId) : [...prev, itemId]);
-  };
-
+  const handleToggleSelect = (itemId) => { setSelectedItems(prev => prev.includes(itemId) ? prev.filter(id => id !== itemId) : [...prev, itemId]); };
   const handleBulkDownload = () => {
     const selectedUrls = media.filter(item => selectedItems.includes(item.id)).map(item => item.url);
     selectedUrls.forEach((url, index) => {
@@ -191,7 +183,6 @@ export default function App() {
       }, index * 300);
     });
   };
-
   const handleView = (item) => {
     const itemIndex = filteredMedia.findIndex(mediaItem => mediaItem.id === item.id);
     setViewingMediaIndex(itemIndex);
@@ -199,32 +190,21 @@ export default function App() {
 
   const FilterButton = ({ filterType, children }) => ( <button onClick={() => setActiveFilter(filterType)} className={`button filter-button ${activeFilter === filterType ? 'active' : ''}`}> {children} </button> );
 
-  // --- LÓGICA DE RENDERIZAÇÃO SIMPLIFICADA ---
   const renderContent = () => {
-    // 1. Estado de Erro
-    if (error) {
-        return <div className="error-message"><strong>Erro de Conexão: </strong><span>{error}</span></div>;
-    }
-    // 2. Estado de Carregamento Inicial
-    if (isLoading && media.length === 0) {
-        return <div className="loader-container"><div className="loader"></div></div>;
-    }
-    // 3. Estado com Conteúdo
-    if (filteredMedia.length > 0) {
-        return (
-            <div className="media-grid">
-                {filteredMedia.slice(0, visibleCount).map(item => (
-                    <MediaItem key={item.id} item={item} onView={() => handleView(item)} onToggleSelect={handleToggleSelect} isSelected={selectedItems.includes(item.id)} />
-                ))}
-            </div>
-        );
-    }
-    // 4. Estado Vazio (sem erro e sem conteúdo)
+    if (error) return <div className="error-message"><strong>Erro de Conexão: </strong><span>{error}</span></div>;
+    if (isLoading && media.length === 0) return <div className="loader-container"><div className="loader"></div></div>;
+    if (filteredMedia.length > 0) return (
+      <div className="media-grid">
+        {filteredMedia.slice(0, visibleCount).map(item => (
+          <MediaItem key={item.id} item={item} onView={() => handleView(item)} onToggleSelect={handleToggleSelect} isSelected={selectedItems.includes(item.id)} backendUrl={BACKEND_URL} />
+        ))}
+      </div>
+    );
     return (
-        <div className="empty-state">
-            <p>{sources.length === 0 ? "Bem-vindo! Adicione uma fonte nas configurações para começar." : "Nenhum conteúdo encontrado para as fontes configuradas."}</p>
-            <p>Tente adicionar novas fontes nas configurações.</p>
-        </div>
+      <div className="empty-state">
+        <p>{sources.length === 0 ? "Bem-vindo! Adicione uma fonte nas configurações para começar." : "Nenhum conteúdo encontrado para as fontes configuradas."}</p>
+        <p>Tente adicionar novas fontes nas configurações.</p>
+      </div>
     );
   };
 
@@ -234,54 +214,16 @@ export default function App() {
     <>
       <style>{`
         * { box-sizing: border-box; }
-        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; -webkit-font-smoothing: antialiased; background-color: #111827; color: #ffffff; }
-        
-        .app-container-wrapper {
-            transition: filter 0.3s ease-in-out;
-            filter: ${isModalOpen ? 'blur(8px)' : 'none'};
-        }
-
+        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #111827; color: #ffffff; }
+        .app-container-wrapper { transition: filter 0.3s ease-in-out; filter: ${isModalOpen ? 'blur(8px)' : 'none'}; }
         .main-content { max-width: 1280px; margin: 0 auto; padding: 2rem 1rem; }
-        
-        .app-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 1rem;
-            margin-bottom: 2rem;
-            flex-wrap: wrap;
-        }
-        .header-text {
-            text-align: left;
-        }
-        .header-title { 
-            font-size: clamp(1.5rem, 4vw, 2rem); 
-            font-weight: 700; 
-            margin: 0;
-        }
-        .header-subtitle { 
-            color: #9ca3af; 
-            margin: 0.25rem 0 0 0;
-        }
-        .header-actions {
-            display: flex;
-            gap: 0.5rem;
-            flex-shrink: 0;
-        }
-        @media (max-width: 640px) {
-            .app-header {
-                flex-direction: column;
-                justify-content: center;
-                gap: 1rem;
-            }
-            .header-text {
-                text-align: center;
-            }
-        }
-
+        .app-header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; }
+        .header-text { text-align: left; }
+        .header-title { font-size: clamp(1.5rem, 4vw, 2rem); font-weight: 700; margin: 0; }
+        .header-subtitle { color: #9ca3af; margin: 0.25rem 0 0 0; }
+        .header-actions { display: flex; gap: 0.5rem; flex-shrink: 0; }
+        @media (max-width: 640px) { .app-header { flex-direction: column; justify-content: center; gap: 1rem; } .header-text { text-align: center; } }
         .icon-button { background: none; border: none; color: #9ca3af; cursor: pointer; padding: 0.5rem; transition: color 0.2s; }
-        .icon-button:hover { color: #ffffff; }
-        .icon-button:disabled { opacity: 0.5; cursor: not-allowed; }
         .icon { width: 1.5rem; height: 1.5rem; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         .syncing { animation: spin 1s linear infinite; }
@@ -289,31 +231,15 @@ export default function App() {
         .button { padding: 0.75rem 1.5rem; font-weight: 600; border-radius: 0.375rem; border: none; cursor: pointer; transition: background-color 0.2s; background-color: #374151; color: #ffffff; }
         .button:hover { background-color: #4b5563; }
         .button.primary { background-color: #2563eb; }
-        .button.primary:hover { background-color: #1d4ed8; }
-        .button.filter-button.active { background-color: #2563eb; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+        .button.filter-button.active { background-color: #2563eb; }
         .button.download { font-size: 0.875rem; padding: 0.25rem 0.75rem; background-color: #2563eb; }
-        .button.download:hover { background-color: #1d4ed8; }
-        
-        .media-grid {
-            display: grid;
-            gap: 1.5rem;
-            grid-template-columns: repeat(1, 1fr);
-        }
-        @media (min-width: 640px) {
-            .media-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-        @media (min-width: 1024px) {
-            .media-grid {
-                grid-template-columns: repeat(3, 1fr);
-            }
-        }
-        
-        .media-card { position: relative; background-color: #1f2937; border-radius: 0.5rem; overflow: hidden; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); transition: transform 0.3s; border: 2px solid transparent; }
+        .media-grid { display: grid; gap: 1.5rem; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+        .media-card { position: relative; background-color: #1f2937; border-radius: 0.5rem; overflow: hidden; border: 2px solid transparent; }
         .media-card.selected { border-color: #2563eb; }
-        .media-preview { cursor: pointer; aspect-ratio: 16 / 9; background-color: #374151; }
+        .media-preview { cursor: pointer; aspect-ratio: 16 / 9; background-color: #374151; position: relative; }
         .media-preview img, .media-preview video { width: 100%; height: 100%; object-fit: cover; }
+        .image-placeholder, .image-full { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; transition: opacity 0.5s ease-in-out; }
+        .image-placeholder { filter: blur(10px); }
         .card-footer { display: flex; justify-content: space-between; align-items: center; padding: 1rem; }
         .author-info { display: flex; align-items: center; gap: 0.5rem; color: #9ca3af; font-size: 0.875rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .source-icon { width: 1.25rem; height: 1.25rem; flex-shrink: 0; }
@@ -363,7 +289,6 @@ export default function App() {
           
           {renderContent()}
           
-          {/* Indicador de carregamento para o scroll infinito */}
           {isLoading && media.length > 0 && <div className="loader-container"><div className="loader"></div></div>}
         </div>
         {selectedItems.length > 0 && (
